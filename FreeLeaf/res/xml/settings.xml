@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Discovery">
+        <CheckBoxPreference
+            android:key="auto_discovery"
+            android:defaultValue="true"
+            android:title="Auto start discovery"
+            android:summary="Starts the discovery feature when the application launches" />
+        <ListPreference
+            android:key="discovery_refresh"
+            android:title="Dicovery refresh time"
+            android:summary="Sends the discovery message at the selected interval measured in seconds"
+            android:entries="@array/refresh_data"
+            android:entryValues="@array/refresh_data_values"
+            android:defaultValue="3000" />
+        <EditTextPreference
+            android:key="discovery_name"
+            android:title="Your full name"
+            android:summary="Sets your full name for this device (it will appear on the discovery list)"
+            android:defaultValue="Unknown" />
+    </PreferenceCategory>
+</PreferenceScreen>

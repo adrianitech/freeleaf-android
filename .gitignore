@@ -1,0 +1,22 @@
+#############
+## Windows detritus
+#############
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+#################
+## IntelliJ
+#################
+
+.idea/
+bin/
+gen/
+out/
+build.xml
+ant.properties
+local.properties
