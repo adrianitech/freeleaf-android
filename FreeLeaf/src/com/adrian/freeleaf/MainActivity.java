@@ -86,9 +86,11 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
                     startActivity(new Intent(MainActivity.this, SettingsActivity.class));
                 } else if(i == 2) {
 
-                } else if(i == 4) {
+                } else if(i == 3) {
 
                 } else if(i == 5) {
+
+                } else if(i == 6) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                     builder.setTitle("Do you really want to exit?")
                             .setMessage("If you exit now all the active file transfers will be intrerupted")
@@ -243,18 +245,19 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             if (rowView == null) {
                 holder = new ViewHolder();
                 if(item.startsWith("*")) {
-                    rowView = mInflater.inflate(android.R.layout.preference_category, null);
-                    holder.text = (TextView)rowView.findViewById(android.R.id.title);
-                    item = item.substring(1);
+                    rowView = mInflater.inflate(R.layout.menu_group, null);
                 } else {
-                    rowView = mInflater.inflate(android.R.layout.simple_list_item_1, null);
-                    holder.text = (TextView)rowView.findViewById(android.R.id.text1);
+                    rowView = mInflater.inflate(R.layout.menu_item, null);
                 }
+                holder.text = (TextView)rowView.findViewById(R.id.text1);
                 rowView.setTag(holder);
             } else {
                 holder = (ViewHolder)rowView.getTag();
             }
 
+            if(item.startsWith("*")) {
+                item = item.substring(1);
+            }
             holder.text.setText(item);
 
             return rowView;

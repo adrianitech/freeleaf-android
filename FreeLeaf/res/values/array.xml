@@ -15,12 +15,12 @@
         <item>15000</item>
     </string-array>
     <string-array name="menu_values">
-        <item>*FreeLeaf</item>
+        <item>*General</item>
         <item>Settings</item>
         <item>About</item>
         <item>Help</item>
-        <item>*File transfers</item>
-        <item>Stop all</item>
+        <item>*Application</item>
+        <item>Stop transfers</item>
         <item>Exit</item>
     </string-array>
 </resources>
