@@ -18,6 +18,5 @@ bin/
 gen/
 out/
 build.xml
-ant.properties
-local.properties
-project.properties
+*.properties
+*.iml
