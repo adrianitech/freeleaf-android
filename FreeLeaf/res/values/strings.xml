@@ -6,9 +6,11 @@
     <string name="header2">Your IP address:&#160;</string>
     <string name="header3">Your name:&#160;</string>
     <string name="header4">Active transfer</string>
+    <string name="header5">Exit application</string>
 
     <string name="detail1">Toggle the top bottom to enable/disable the auto discovery feature. If this feature is disabled you will need to connect to the device via the IP address.</string>
     <string name="detail2">This is your device local IP address. If you don\'t see your device into the device list you can connect manually via this IP address.</string>
     <string name="detail3">This is your name and it will appear near your device info in the discovery list. To change your name tap the button below.</string>
     <string name="detail4">There is no active file transfer that is currently running.</string>
+    <string name="detail5">WARNING! The current active file transfer will be force closed. Please ensure that your data was transfered.</string>
 </resources>

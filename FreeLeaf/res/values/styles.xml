@@ -3,29 +3,47 @@
     <style name="CustomAppTheme" parent="android:Theme.Holo.Light">
         <item name="android:actionBarStyle">@style/LightActionBarStyle</item>
         <item name="android:windowBackground">@drawable/window_bg</item>
+        <!--<item name="android:editTextStyle">@style/EditTextAppTheme</item>-->
+        <item name="android:buttonStyle">@style/ButtonAppTheme</item>
+        <item name="android:imageButtonStyle">@style/ImageButtonAppTheme</item>
     </style>
 
     <style name="LightActionBarStyle" parent="android:Widget.Holo.Light.ActionBar">
         <item name="android:background">@drawable/actionbar_bg</item>
         <item name="android:titleTextStyle">@style/LightActionBarTextStyle</item>
     </style>
-
     <style name="LightActionBarTextStyle" parent="android:TextAppearance.Holo.Widget.ActionBar.Title">
         <item name="android:textColor">#333333</item>
-        <item name="android:textSize">15dp</item>
+        <item name="android:textSize">16dp</item>
     </style>
 
+    <style name="EditTextAppTheme" parent="android:Widget.EditText">
+        <item name="android:background">@drawable/edit_text_holo_light</item>
+        <item name="android:textColor">#000000</item>
+    </style>
+    <style name="ButtonAppTheme" parent="android:Widget.Button">
+        <item name="android:background">@drawable/btn_default_holo_light</item>
+        <item name="android:minHeight">48dip</item>
+        <item name="android:minWidth">64dip</item>
+        <item name="android:textColor">#000000</item>
+    </style>
+    <style name="ImageButtonAppTheme" parent="android:Widget.ImageButton">
+        <item name="android:background">@drawable/btn_default_holo_light</item>
+    </style>
+    <style name="SwitchTextAppearance" parent="android:TextAppearance">
+        <item name="android:textColor">#ffffff</item>
+    </style>
 
     <style name="HeaderTextViewStyle" parent="android:TextAppearance.Widget.TextView">
         <item name="android:textColor">#333333</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">18sp</item>
     </style>
     <style name="HeaderTextViewStyle1" parent="android:TextAppearance.Widget.TextView">
         <item name="android:textColor">#e4715f</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">18sp</item>
     </style>
     <style name="DetailTextViewStyle" parent="android:TextAppearance.Widget.TextView">
         <item name="android:textColor">#6d6d6d</item>
-        <item name="android:textSize">10sp</item>
+        <item name="android:textSize">12sp</item>
     </style>
 </resources>

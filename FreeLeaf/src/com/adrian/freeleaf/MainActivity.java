@@ -4,11 +4,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.*;
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.text.format.Formatter;
 import android.view.*;
 import android.widget.*;
 import com.adrian.freeleaf.Utils.DiscoveryThread;
@@ -25,7 +23,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
 
     private TextView textOnOff, textIPAddress, textName;
     private Switch switchDiscovery;
-    private Button buttonName;
+    private Button buttonName, buttonExit;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -36,6 +34,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         textIPAddress = (TextView)findViewById(R.id.textIPAddress);
         textName = (TextView)findViewById(R.id.textName);
         buttonName = (Button)findViewById(R.id.buttonName);
+        buttonExit = (Button)findViewById(R.id.buttonExit);
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -79,6 +78,13 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             }
         });
 
+        buttonExit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                System.exit(0);
+            }
+        });
+
 
         /*IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         Intent batteryStatus = this.registerReceiver(rec, ifilter);
@@ -86,16 +92,6 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
 
         File path = Environment.getExternalStorageDirectory();
         stat = new StatFs(path.getPath());*/
-    }
-
-    @Override
-    public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        switch(item.getItemId()) {
-            case R.id.action_exit:
-                System.exit(0);
-                return true;
-        }
-        return super.onMenuItemSelected(featureId, item);
     }
 
     private String getWifiIPAddress() {
