@@ -1,46 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.SlidingPaneLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/slidingPane">
+    android:background="#ffffff"
+    >
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/scrollView"
+        android:layout_above="@+id/bottomLayout"
+        android:padding="20dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Auto discovery: "
+                    android:id="@+id/textView"
+                    android:textColor="#333333"
+                    android:textSize="16sp"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ON"
+                    android:id="@+id/textOnOff"
+                    android:textColor="#e4715f"
+                    android:textSize="16sp"
+                    />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Toggle the top bottom to enable/disable the autodiscovery feature. If this feature is disabled you will need to connect to the device via the IP address."
+                android:id="@+id/textView1"
+                android:textSize="10sp"
+                android:textColor="#6d6d6d"
+                android:layout_marginBottom="15dp"/>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:id="@+id/linearLayout">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Your IP address: "
+                    android:id="@+id/textView7"
+                    android:textColor="#333333"
+                    android:textSize="16sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="192.168.0.101"
+                    android:id="@+id/textView8"
+                    android:textColor="#e4715f"
+                    android:textSize="16sp"/>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="This is your device local IP address. If you don't see your device into the device list you can connect manually via this IP address."
+                android:id="@+id/textView6"
+                android:textSize="10sp"
+                android:textColor="#6d6d6d"
+                android:layout_marginBottom="15dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Transfer status"
+                android:id="@+id/textView3"
+                android:textColor="#333333"
+                android:textSize="16sp"
+                android:layout_marginBottom="5dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="There are no currently running active file transfers. "
+                android:id="@+id/textView4"
+                android:textSize="10sp"
+                android:textColor="#6d6d6d"
+                android:layout_marginBottom="15dp"/>
+        </LinearLayout>
+    </ScrollView>
 
     <LinearLayout
-        android:layout_width="250dp"
-        android:layout_height="match_parent"
-        android:background="@drawable/menu_bg">
-        <ListView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:id="@+id/listActions"
-            android:paddingBottom="10dp"
-            android:paddingTop="10dp"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            android:clipToPadding="false"
-            android:scrollbarStyle="outsideOverlay"
-            android:divider="@null"
-            android:dividerHeight="0dp" />
-    </LinearLayout>
-
-    <FrameLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/bottomLayout"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp">
 
-        <ImageView
+        <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/pulseImage"
-            android:layout_gravity="center" />
-
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/buttonActivate"
-            android:src="@drawable/ic_android_green"
-            android:layout_gravity="center"
-            android:background="@null" />
-    </FrameLayout>
-
-</android.support.v4.widget.SlidingPaneLayout>
+            android:id="@+id/imageButton"
+            android:layout_gravity="center_horizontal"
+            android:text="Settings"
+            android:textSize="12sp"
+            android:textColor="#333333"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"/>
+    </LinearLayout>
+</RelativeLayout>
