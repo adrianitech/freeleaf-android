@@ -12,5 +12,20 @@
 
     <style name="LightActionBarTextStyle" parent="android:TextAppearance.Holo.Widget.ActionBar.Title">
         <item name="android:textColor">#333333</item>
+        <item name="android:textSize">15dp</item>
+    </style>
+
+
+    <style name="HeaderTextViewStyle" parent="android:TextAppearance.Widget.TextView">
+        <item name="android:textColor">#333333</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+    <style name="HeaderTextViewStyle1" parent="android:TextAppearance.Widget.TextView">
+        <item name="android:textColor">#e4715f</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+    <style name="DetailTextViewStyle" parent="android:TextAppearance.Widget.TextView">
+        <item name="android:textColor">#6d6d6d</item>
+        <item name="android:textSize">10sp</item>
     </style>
 </resources>
