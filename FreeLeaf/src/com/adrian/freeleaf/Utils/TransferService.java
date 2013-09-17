@@ -114,13 +114,17 @@ public class TransferService extends Service {
                             bytesTotal += bytesRead;
                             lastRead += bytesRead;
 
-                            if(SystemClock.uptimeMillis() - lastUpdate >= 1000) {
+                            int diff = (int)(SystemClock.uptimeMillis() - lastUpdate);
+
+                            if(diff >= 1000) {
                                 lastUpdate = SystemClock.uptimeMillis();
 
                                 String readSize = Formatter.formatFileSize(TransferService.this, bytesTotal);
                                 String lastSize = Formatter.formatFileSize(TransferService.this, lastRead);
 
-                                int timeLeft = (int)((size - bytesTotal) / lastRead) + 1;
+                                float t1 = (size - bytesTotal) / (float)lastRead;
+                                float t2 = diff / (float)1000;
+                                int timeLeft = (int)(t1 / t2) + 1;
 
                                 if(lastLeft == 0) lastLeft = timeLeft;
                                 if(timeLeft > lastLeft) timeLeft = lastLeft + 1;
