@@ -19,13 +19,13 @@ import java.net.Socket;
 public class TransferService extends Service {
 
     private final Integer PORT = 8080;
-
     private ServerSocket serverSocket;
+    private Boolean forceClose;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
+        forceClose = false;
         try {
             serverSocket = new ServerSocket(PORT);
             transferThread.start();
@@ -38,9 +38,9 @@ public class TransferService extends Service {
     public void onDestroy() {
         super.onDestroy();
 
+        forceClose = true;
         try { serverSocket.close(); }
         catch (IOException e) { e.printStackTrace(); }
-
         transferThread.interrupt();
     }
 
@@ -89,6 +89,7 @@ public class TransferService extends Service {
             int bytesRead;
 
             while(!this.isInterrupted() && serverSocket != null && !serverSocket.isClosed()) {
+                if(forceClose) break;
                 try {
                     Socket client = serverSocket.accept();
                     InputStream iStream = client.getInputStream();
@@ -110,6 +111,8 @@ public class TransferService extends Service {
                         intent.putExtra("message1", file.getName());
 
                         while((bytesRead = iStream.read(buffer, 0, buffer.length)) > 0) {
+                            if(forceClose) break;
+
                             fileStream.write(buffer, 0, bytesRead);
                             bytesTotal += bytesRead;
                             lastRead += bytesRead;
@@ -213,6 +216,8 @@ public class TransferService extends Service {
                                 intent.putExtra("message1", file.getName());
 
                                 while((bytesRead = fis.read(buffer, 0, buffer.length)) > 0) {
+                                    if(forceClose) break;
+
                                     oStream.write(buffer, 0, bytesRead);
                                     bytesTotal += bytesRead;
                                     lastRead += bytesRead;

@@ -99,6 +99,10 @@ public class MainActivity extends Activity {
                         .setPositiveButton("Exit", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
+                                Intent intent = new Intent(MainActivity.this, DiscoveryService.class);
+                                stopService(intent);
+                                intent = new Intent(MainActivity.this, TransferService.class);
+                                stopService(intent);
                                 finish();
                             }
                         })
