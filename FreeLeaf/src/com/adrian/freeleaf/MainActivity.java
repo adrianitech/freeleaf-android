@@ -1,60 +1,69 @@
 package com.adrian.freeleaf;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.*;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.view.*;
 import android.widget.*;
-import com.adrian.freeleaf.Utils.DiscoveryThread;
+import com.adrian.freeleaf.Utils.DiscoveryService;
+import com.adrian.freeleaf.Utils.TransferService;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
 
-public class MainActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends Activity {
 
-    private DiscoveryThread discoveryThread;
     private SharedPreferences prefs;
 
-    private TextView textOnOff, textIPAddress, textName;
+    private TextView textOnOff, textIPAddress, textName, textTransfer;
     private Switch switchDiscovery;
-    private Button buttonName, buttonExit;
+    private Button buttonName, buttonStop, buttonExit;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         textOnOff = (TextView)findViewById(R.id.textOnOff);
         textIPAddress = (TextView)findViewById(R.id.textIPAddress);
         textName = (TextView)findViewById(R.id.textName);
+        textTransfer = (TextView)findViewById(R.id.textTransfer);
         buttonName = (Button)findViewById(R.id.buttonName);
+        buttonStop = (Button)findViewById(R.id.buttonStop);
         buttonExit = (Button)findViewById(R.id.buttonExit);
 
-        prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefs.registerOnSharedPreferenceChangeListener(this);
+        final Boolean serviceRunning = getDiscoveryServiceRunning();
+        if(!serviceRunning && prefs.getBoolean("auto_discovery", true)) {
+            Intent intent = new Intent(this, DiscoveryService.class);
+            startService(intent);
+        }
 
-        discoveryThread = new DiscoveryThread(this);
-        discoveryThread.setRefreshRate(3000);
-        discoveryThread.setIsActive(prefs.getBoolean("auto_discovery", true));
-        discoveryThread.setUsername(prefs.getString("discovery_name", "Unknown"));
-        discoveryThread.start();
+        Intent intent = new Intent(this, TransferService.class);
+        startService(intent);
 
-        textOnOff.setText(discoveryThread.getIsActive() ? "ON" : "OFF");
+        textOnOff.setText(serviceRunning ? "ON" : "OFF");
         textIPAddress.setText(getWifiIPAddress());
-        textName.setText(discoveryThread.getUsername());
+        textName.setText(prefs.getString("discovery_name", "Unknown"));
 
         buttonName.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 final View content = getLayoutInflater().inflate(R.layout.dialog_name_layout, null);
-                final EditText textName = (EditText)content.findViewById(R.id.textName);
-                textName.setText(discoveryThread.getUsername());
+                final EditText text = (EditText)content.findViewById(R.id.textName);
+                text.setText(prefs.getString("discovery_name", "Unknown"));
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 builder.setView(content)
@@ -62,8 +71,11 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
                         .setPositiveButton("Change", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
+                                final String newName = text.getText().toString();
+                                textName.setText(newName);
+
                                 SharedPreferences.Editor editor = prefs.edit();
-                                editor.putString("discovery_name", textName.getText().toString());
+                                editor.putString("discovery_name", newName);
                                 editor.commit();
                             }
                         })
@@ -81,17 +93,62 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         buttonExit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                System.exit(0);
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setMessage(getString(R.string.detail5))
+                        .setTitle(getString(R.string.header5))
+                        .setPositiveButton("Exit", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                finish();
+                            }
+                        })
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                            }
+                        });
+
+                Dialog dialog = builder.create();
+                dialog.show();
             }
         });
 
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(DiscoveryService.DISCOVERY_MESSAGE);
+        filter.addAction("t");
+        registerReceiver(receiver, filter);
+    }
 
-        /*IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        Intent batteryStatus = this.registerReceiver(rec, ifilter);
-        rec.onReceive(this, batteryStatus);
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
 
-        File path = Environment.getExternalStorageDirectory();
-        stat = new StatFs(path.getPath());*/
+        switchDiscovery = (Switch)menu.findItem(R.id.action_switch).getActionView().findViewById(R.id.switchDiscovery);
+        switchDiscovery.setChecked(prefs.getBoolean("auto_discovery", true));
+        switchDiscovery.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                Intent intent = new Intent(MainActivity.this, DiscoveryService.class);
+                if (b) startService(intent);
+                else stopService(intent);
+
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean("auto_discovery", b);
+                editor.commit();
+            }
+        });
+
+        return true;
+    }
+
+    private Boolean getDiscoveryServiceRunning() {
+        ActivityManager manager = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (DiscoveryService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String getWifiIPAddress() {
@@ -111,42 +168,34 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         return ipAddressString;
     }
 
-    /*BroadcastReceiver rec = new BroadcastReceiver() {
+    BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-            int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-            batt = (int)(100 * level / (float)scale);
-        }
-    }; */
+            String action = intent.getAction();
+            if(action.equals(DiscoveryService.DISCOVERY_MESSAGE)) {
+                Bundle extra = intent.getExtras();
+                Boolean active = extra.getBoolean(DiscoveryService.DISCOVERY_ENABLED);
+                textOnOff.setText(active ? "ON" : "OFF");
+            } else if(action.equals("t")) {
+                Bundle extra = intent.getExtras();
+                Boolean active = extra.getBoolean("active");
+                if(active) {
+                    String message = extra.getString("message");
+                    String message1 = extra.getString("message1");
+                    String message2 = extra.getString("message2");
+                    String message3 = extra.getString("message3");
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        if(s.equals("discovery_name")) {
-            final String username = sharedPreferences.getString("discovery_name", "Unknown");
-            discoveryThread.setUsername(username);
-            textName.setText(username);
-        }
-    }
+                    Spanned span = Html.fromHtml(
+                            message +
+                            "<br><b>File:</b> " + message1 +
+                            "<br><b>Progress:</b> " + message2 +
+                            "<br><b>Time left:</b> " + message3);
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-
-        switchDiscovery = (Switch)menu.findItem(R.id.action_switch).getActionView().findViewById(R.id.switchDiscovery);
-        switchDiscovery.setChecked(discoveryThread.getIsActive());
-        switchDiscovery.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                textOnOff.setText(b ? "ON" : "OFF");
-                discoveryThread.setIsActive(b);
-
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putBoolean("auto_discovery", b);
-                editor.commit();
+                    textTransfer.setText(span);
+                } else {
+                    textTransfer.setText(getString(R.string.detail4));
+                }
             }
-        });
-
-        return true;
-    }
+        }
+    };
 }
