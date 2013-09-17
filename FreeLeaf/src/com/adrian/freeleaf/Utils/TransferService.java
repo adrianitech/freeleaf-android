@@ -107,7 +107,7 @@ public class TransferService extends Service {
                         Intent intent = new Intent("t");
                         intent.putExtra("active", true);
                         intent.putExtra("message", "Receiving file from " + client.getInetAddress().getHostAddress());
-                        intent.putExtra("message1", file.getAbsolutePath());
+                        intent.putExtra("message1", file.getName());
 
                         while((bytesRead = iStream.read(buffer, 0, buffer.length)) > 0) {
                             fileStream.write(buffer, 0, bytesRead);
@@ -210,7 +210,7 @@ public class TransferService extends Service {
                                 Intent intent = new Intent("t");
                                 intent.putExtra("active", true);
                                 intent.putExtra("message", "Sending file to " + client.getInetAddress().getHostAddress());
-                                intent.putExtra("message1", path);
+                                intent.putExtra("message1", file.getName());
 
                                 while((bytesRead = fis.read(buffer, 0, buffer.length)) > 0) {
                                     oStream.write(buffer, 0, bytesRead);

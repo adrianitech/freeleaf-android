@@ -187,7 +187,7 @@ public class MainActivity extends Activity {
 
                     Spanned span = Html.fromHtml(
                             message +
-                            "<br><b>File:</b> " + message1 +
+                            "<br><b>File name:</b> " + message1 +
                             "<br><b>Progress:</b> " + message2 +
                             "<br><b>Time left:</b> " + message3);
 
