@@ -18,6 +18,8 @@ import java.net.Socket;
 
 public class TransferService extends Service {
 
+    public static String BROADCAST_ACTION = "com.adrian.freeleaf.transfer";
+
     private final Integer PORT = 8080;
     private ServerSocket serverSocket;
     private Boolean forceClose;
@@ -105,7 +107,7 @@ public class TransferService extends Service {
                         File file = new File(path, name);
                         FileOutputStream fileStream = new FileOutputStream(file);
 
-                        Intent intent = new Intent("t");
+                        Intent intent = new Intent(BROADCAST_ACTION);
                         intent.putExtra("active", true);
                         intent.putExtra("message", "Receiving file from " + client.getInetAddress().getHostAddress());
                         intent.putExtra("message1", file.getName());
@@ -215,7 +217,7 @@ public class TransferService extends Service {
                                 File file = new File(path);
                                 FileInputStream fis = new FileInputStream(file);
 
-                                Intent intent = new Intent("t");
+                                Intent intent = new Intent(BROADCAST_ACTION);
                                 intent.putExtra("active", true);
                                 intent.putExtra("message", "Sending file to " + client.getInetAddress().getHostAddress());
                                 intent.putExtra("message1", file.getName());

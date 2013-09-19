@@ -9,8 +9,6 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Html;
-import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.Spanned;
 import android.view.*;
 import android.widget.*;
@@ -33,7 +31,7 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        setContentView(R.layout.main_layout);
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -118,8 +116,8 @@ public class MainActivity extends Activity {
         });
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(DiscoveryService.DISCOVERY_MESSAGE);
-        filter.addAction("t");
+        filter.addAction(DiscoveryService.BROADCAST_ACTION);
+        filter.addAction(TransferService.BROADCAST_ACTION);
         registerReceiver(receiver, filter);
     }
 
@@ -176,11 +174,11 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if(action.equals(DiscoveryService.DISCOVERY_MESSAGE)) {
+            if(action.equals(DiscoveryService.BROADCAST_ACTION)) {
                 Bundle extra = intent.getExtras();
-                Boolean active = extra.getBoolean(DiscoveryService.DISCOVERY_ENABLED);
+                Boolean active = extra.getBoolean("enabled");
                 textOnOff.setText(active ? "ON" : "OFF");
-            } else if(action.equals("t")) {
+            } else if(action.equals(TransferService.BROADCAST_ACTION)) {
                 Bundle extra = intent.getExtras();
                 Boolean active = extra.getBoolean("active");
                 if(active) {

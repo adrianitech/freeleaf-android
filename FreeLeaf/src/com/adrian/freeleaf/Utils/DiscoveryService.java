@@ -17,8 +17,7 @@ import java.util.TimerTask;
 
 public class DiscoveryService extends Service implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    public static String DISCOVERY_MESSAGE = "com.adrian.freeleaf.DiscoveryService.Message";
-    public static String DISCOVERY_ENABLED = "com.adrian.freeleaf.DiscoveryService.Enabled";
+    public static String BROADCAST_ACTION = "com.adrian.freeleaf.discovery";
 
     private final Integer PORT = 8888;
     private final Integer INTERVAL = 3000;
@@ -59,8 +58,8 @@ public class DiscoveryService extends Service implements SharedPreferences.OnSha
         timer = new Timer();
         timer.scheduleAtFixedRate(discoveryTask, 0, INTERVAL);
 
-        Intent intent = new Intent(DISCOVERY_MESSAGE);
-        intent.putExtra(DISCOVERY_ENABLED, true);
+        Intent intent = new Intent(BROADCAST_ACTION);
+        intent.putExtra("enabled", true);
         sendBroadcast(intent);
     }
 
@@ -74,8 +73,8 @@ public class DiscoveryService extends Service implements SharedPreferences.OnSha
         datagramSocket.disconnect();
         datagramSocket.close();
 
-        Intent intent = new Intent(DISCOVERY_MESSAGE);
-        intent.putExtra(DISCOVERY_ENABLED, false);
+        Intent intent = new Intent(BROADCAST_ACTION);
+        intent.putExtra("enabled", false);
         sendBroadcast(intent);
     }
 
