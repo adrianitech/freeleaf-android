@@ -17,8 +17,8 @@ import java.util.TimerTask;
 
 public class DiscoveryService extends Service implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    public static String DISCOVERY_MESSAGE = "discovery_message";
-    public static String DISCOVERY_ENABLED = "discovery_enabled";
+    public static String DISCOVERY_MESSAGE = "com.adrian.freeleaf.DiscoveryService.Message";
+    public static String DISCOVERY_ENABLED = "com.adrian.freeleaf.DiscoveryService.Enabled";
 
     private final Integer PORT = 8888;
     private final Integer INTERVAL = 3000;

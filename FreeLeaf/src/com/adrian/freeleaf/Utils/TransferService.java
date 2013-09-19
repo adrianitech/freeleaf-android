@@ -199,6 +199,9 @@ public class TransferService extends Service {
                             size = Integer.parseInt(cmds[3]);
 
                             nextIsFile = 1;
+                        } else if(cmds[0].equals("delete")) {
+                            File file = new File(cmds[1]);
+                            DeleteRecursive(file);
                         } else if(cmds[0].equals("receive")) {
                             if(nextIsFile == 2) {
                                 nextIsFile = 0;
@@ -255,9 +258,6 @@ public class TransferService extends Service {
                                 size = file.length();
 
                                 response = size + "";
-
-
-
                                 nextIsFile = 2;
                             }
                         }
@@ -274,4 +274,12 @@ public class TransferService extends Service {
             }
         }
     };
+
+    private void DeleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory())
+            for (File child : fileOrDirectory.listFiles())
+                DeleteRecursive(child);
+
+        fileOrDirectory.delete();
+    }
 }
