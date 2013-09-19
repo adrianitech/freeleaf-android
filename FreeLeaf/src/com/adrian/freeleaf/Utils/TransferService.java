@@ -170,28 +170,30 @@ public class TransferService extends Service {
                                 response = file.getParent();
                             }
                         } else if(cmds[0].equals("list")) {
-                            File dir = new File(cmds[1]);
-                            File[] files = dir.listFiles();
+                            if(cmds.length >= 2) {
+                                File dir = new File(cmds[1]);
+                                File[] files = dir.listFiles();
 
-                            if(files != null) {
-                                JSONArray jsonArray = new JSONArray();
+                                if(files != null) {
+                                    JSONArray jsonArray = new JSONArray();
 
-                                for(File f : files) {
-                                    if(f.isHidden()) continue;
-                                    JSONObject object = new JSONObject();
-                                    try {
-                                        object.put("name", f.getName());
-                                        object.put("path", f.getAbsolutePath());
-                                        object.put("date", f.lastModified());
-                                        object.put("size", f.isFile() ? f.length() : "");
-                                        object.put("folder", f.isDirectory());
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
+                                    for(File f : files) {
+                                        if(f.isHidden()) continue;
+                                        JSONObject object = new JSONObject();
+                                        try {
+                                            object.put("name", f.getName());
+                                            object.put("path", f.getAbsolutePath());
+                                            object.put("date", f.lastModified());
+                                            object.put("size", f.isFile() ? f.length() : "");
+                                            object.put("folder", f.isDirectory());
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                        jsonArray.put(object);
                                     }
-                                    jsonArray.put(object);
-                                }
 
-                                response = jsonArray.toString();
+                                    response = jsonArray.toString();
+                                }
                             }
                         } else if(cmds[0].equals("send")) {
                             name = cmds[1];
@@ -222,6 +224,8 @@ public class TransferService extends Service {
                                     if(forceClose) break;
 
                                     oStream.write(buffer, 0, bytesRead);
+                                    oStream.flush();
+
                                     bytesTotal += bytesRead;
                                     lastRead += bytesRead;
 
