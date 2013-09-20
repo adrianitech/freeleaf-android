@@ -20,7 +20,7 @@ public class TransferService extends Service {
 
     public static String BROADCAST_ACTION = "com.adrian.freeleaf.transfer";
 
-    private final Integer PORT = 8080;
+    private final Integer PORT = 8000;
     private ServerSocket serverSocket;
     private Boolean forceClose;
 
@@ -111,6 +111,8 @@ public class TransferService extends Service {
 
                         if(cmds[0].equals("root")) {
                             response = Environment.getExternalStorageDirectory().getAbsolutePath();
+                            oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
+                            oStream.close();
                         } else if(cmds[0].equals("up")) {
                             if(cmds[1].equals(
                                     Environment.getExternalStorageDirectory().getAbsolutePath())) {
@@ -119,6 +121,8 @@ public class TransferService extends Service {
                                 File file = new File(cmds[1]);
                                 response = file.getParent();
                             }
+                            oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
+                            oStream.close();
                         } else if(cmds[0].equals("list")) {
                             if(cmds.length >= 2) {
                                 File dir = new File(cmds[1]);
@@ -144,12 +148,16 @@ public class TransferService extends Service {
                                     response = jsonArray.toString();
                                 }
                             }
+                            oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
+                            oStream.close();
                         } else if(cmds[0].equals("send")) {
                             name = cmds[1];
                             path = cmds[2];
                             size = Integer.parseInt(cmds[3]);
 
                             nextIsFile = 1;
+                            oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
+                            oStream.close();
                         } else if(cmds[0].equals("delete")) {
                             File file = new File(cmds[1]);
                             DeleteRecursive(file);
@@ -187,12 +195,36 @@ public class TransferService extends Service {
                                 response = String.valueOf(size);
                                 nextIsFile = 2;
                             }
+                        } else if(cmds[0].equals("stream")) {
+                            final String pp = cmds[1];
+                            final OutputStream os = oStream;
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    File file = new File(pp);
+                                    FileInputStream fis = null;
+                                    try {
+                                        fis = new FileInputStream(file);
+                                        int xxx = 0;
+                                        byte[] butter = new byte[1024];
+                                        while((xxx = fis.read(butter, 0, butter.length)) > 0) {
+                                            //if(forceClose) break;
+                                            os.write(butter, 0, xxx);
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                                    }
+
+                                }
+                            }).start();
                         }
 
-                        oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
-                        oStream.flush();
+                        if(nextIsFile == 0) {
+                            //oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
+                        }
+                        //oStream.flush();
 
-                        client.close();
+                        //client.close();
                     }
 
                 } catch (IOException e) {
