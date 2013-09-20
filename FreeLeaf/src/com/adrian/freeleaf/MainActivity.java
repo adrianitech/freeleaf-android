@@ -182,17 +182,10 @@ public class MainActivity extends Activity {
                 Bundle extra = intent.getExtras();
                 Boolean active = extra.getBoolean("active");
                 if(active) {
-                    String message = extra.getString("message");
                     String message1 = extra.getString("message1");
                     String message2 = extra.getString("message2");
-                    String message3 = extra.getString("message3");
 
-                    Spanned span = Html.fromHtml(
-                            message +
-                            "<br><b>File name:</b> " + message1 +
-                            "<br><b>Progress:</b> " + message2 +
-                            "<br><b>Time left:</b> " + message3);
-
+                    Spanned span = Html.fromHtml(message1 + "<br><b>File name:</b> " + message2);
                     textTransfer.setText(span);
                 } else {
                     textTransfer.setText(getString(R.string.detail4));

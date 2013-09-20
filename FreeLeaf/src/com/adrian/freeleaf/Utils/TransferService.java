@@ -51,34 +51,6 @@ public class TransferService extends Service {
         return null;
     }
 
-    private String getTimeToETA(long timeLeft) {
-        String msgLeft;
-
-        if(timeLeft < 60) {
-            if(timeLeft == 1) {
-                msgLeft = " second left";
-            } else {
-                msgLeft = " seconds left";
-            }
-        } else if(timeLeft < 3600) {
-            timeLeft /= 60;
-            if(timeLeft == 1) {
-                msgLeft = " minute left";
-            } else {
-                msgLeft = " minutes left";
-            }
-        } else {
-            timeLeft /= 3600;
-            if(timeLeft == 1) {
-                msgLeft = " hour left";
-            } else {
-                msgLeft = " hours left";
-            }
-        }
-
-        return timeLeft + msgLeft;
-    }
-
     Thread transferThread = new Thread() {
         @Override
         public void run() {
@@ -87,7 +59,7 @@ public class TransferService extends Service {
             String name = null, path = null;
             long size = 0;
 
-            byte[] buffer = new byte[16384];
+            byte[] buffer = new byte[8192];
             int bytesRead;
 
             while(!this.isInterrupted() && serverSocket != null && !serverSocket.isClosed()) {
@@ -97,51 +69,27 @@ public class TransferService extends Service {
                     InputStream iStream = client.getInputStream();
                     OutputStream oStream = client.getOutputStream();
 
+                    client.setTcpNoDelay(true);
+                    client.setSendBufferSize(8192);
+                    client.setReceiveBufferSize(8192);
+
                     if(nextIsFile == 1 && size != 0) {
                         nextIsFile = 0;
-
-                        long bytesTotal = 0, lastRead = 0, lastUpdate = SystemClock.uptimeMillis();
-                        String totalSize = Formatter.formatFileSize(TransferService.this, size);
-                        int lastLeft = 0;
 
                         File file = new File(path, name);
                         FileOutputStream fileStream = new FileOutputStream(file);
 
                         Intent intent = new Intent(BROADCAST_ACTION);
                         intent.putExtra("active", true);
-                        intent.putExtra("message", "Receiving file from " + client.getInetAddress().getHostAddress());
-                        intent.putExtra("message1", file.getName());
+                        intent.putExtra("message1", "Receiving file from " + client.getInetAddress().getHostAddress());
+                        intent.putExtra("message2", file.getName());
+                        sendBroadcast(intent);
 
                         while((bytesRead = iStream.read(buffer, 0, buffer.length)) > 0) {
                             if(forceClose) break;
-
                             fileStream.write(buffer, 0, bytesRead);
-                            bytesTotal += bytesRead;
-                            lastRead += bytesRead;
-
-                            int diff = (int)(SystemClock.uptimeMillis() - lastUpdate);
-
-                            if(diff >= 1000) {
-                                lastUpdate = SystemClock.uptimeMillis();
-
-                                String readSize = Formatter.formatFileSize(TransferService.this, bytesTotal);
-                                String lastSize = Formatter.formatFileSize(TransferService.this, lastRead);
-
-                                float t1 = (size - bytesTotal) / (float)lastRead;
-                                float t2 = diff / (float)1000;
-                                int timeLeft = (int)(t1 / t2) + 1;
-
-                                if(lastLeft == 0) lastLeft = timeLeft;
-                                if(timeLeft > lastLeft) timeLeft = lastLeft + 1;
-                                lastLeft = timeLeft;
-
-                                intent.putExtra("message2", readSize + "/" + totalSize + " (" + lastSize + "/s)");
-                                intent.putExtra("message3", getTimeToETA(timeLeft));
-                                sendBroadcast(intent);
-
-                                lastRead = 0;
-                            }
                         }
+
                         fileStream.close();
 
                         intent.putExtra("active", false);
@@ -180,7 +128,6 @@ public class TransferService extends Service {
                                     JSONArray jsonArray = new JSONArray();
 
                                     for(File f : files) {
-                                        if(f.isHidden()) continue;
                                         JSONObject object = new JSONObject();
                                         try {
                                             object.put("name", f.getName());
@@ -210,46 +157,20 @@ public class TransferService extends Service {
                             if(nextIsFile == 2) {
                                 nextIsFile = 0;
 
-                                long bytesTotal = 0, lastRead = 0, lastUpdate = SystemClock.uptimeMillis();
-                                String totalSize = Formatter.formatFileSize(TransferService.this, size);
-                                int lastLeft = 0;
-
                                 File file = new File(path);
                                 FileInputStream fis = new FileInputStream(file);
 
                                 Intent intent = new Intent(BROADCAST_ACTION);
                                 intent.putExtra("active", true);
-                                intent.putExtra("message", "Sending file to " + client.getInetAddress().getHostAddress());
-                                intent.putExtra("message1", file.getName());
+                                intent.putExtra("message1", "Sending file to " + client.getInetAddress().getHostAddress());
+                                intent.putExtra("message2", file.getName());
+                                sendBroadcast(intent);
 
                                 while((bytesRead = fis.read(buffer, 0, buffer.length)) > 0) {
                                     if(forceClose) break;
-
                                     oStream.write(buffer, 0, bytesRead);
-                                    oStream.flush();
-
-                                    bytesTotal += bytesRead;
-                                    lastRead += bytesRead;
-
-                                    if(SystemClock.uptimeMillis() - lastUpdate >= 1000) {
-                                        lastUpdate = SystemClock.uptimeMillis();
-
-                                        String readSize = Formatter.formatFileSize(TransferService.this, bytesTotal);
-                                        String lastSize = Formatter.formatFileSize(TransferService.this, lastRead);
-
-                                        int timeLeft = (int)((size - bytesTotal) / lastRead) + 1;
-
-                                        if(lastLeft == 0) lastLeft = timeLeft;
-                                        if(timeLeft > lastLeft) timeLeft = lastLeft + 1;
-                                        lastLeft = timeLeft;
-
-                                        intent.putExtra("message2", readSize + "/" + totalSize + " (" + lastSize + "/s)");
-                                        intent.putExtra("message3", getTimeToETA(timeLeft));
-                                        sendBroadcast(intent);
-
-                                        lastRead = 0;
-                                    }
                                 }
+                                oStream.flush();
 
                                 intent.putExtra("active", false);
                                 sendBroadcast(intent);
@@ -263,7 +184,7 @@ public class TransferService extends Service {
                                 File file = new File(path);
                                 size = file.length();
 
-                                response = size + "";
+                                response = String.valueOf(size);
                                 nextIsFile = 2;
                             }
                         }
