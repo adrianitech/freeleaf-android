@@ -1,7 +1,9 @@
 package com.adrian.freeleaf.Utils;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.os.IBinder;
 import org.apache.http.util.EncodingUtils;
@@ -20,6 +22,7 @@ public class TransferService extends Service {
     private final Integer PORT = 8000;
     private ServerSocket serverSocket;
     private Boolean forceClose;
+    WifiManager.WifiLock lock;
 
     @Override
     public void onCreate() {
@@ -28,6 +31,8 @@ public class TransferService extends Service {
         try {
             serverSocket = new ServerSocket(PORT);
             listenThread.start();
+            lock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock("transfer-wifi-lock");
+            lock.acquire();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -41,6 +46,8 @@ public class TransferService extends Service {
         try { serverSocket.close(); }
         catch (IOException e) { e.printStackTrace(); }
         listenThread.interrupt();
+
+        if(lock != null) lock.release();
     }
 
     @Override
@@ -55,6 +62,13 @@ public class TransferService extends Service {
         public SendThread(Socket s, File f) {
             client = s;
             file = f;
+
+            Intent intent = new Intent(TransferService.BROADCAST_ACTION);
+            intent.putExtra("id", this.getId());
+            intent.putExtra("message1", "Sending file to " + client.getInetAddress().getHostAddress());
+            intent.putExtra("message2", file.getName());
+            intent.putExtra("active", true);
+            sendBroadcast(intent);
         }
 
         @Override
@@ -78,6 +92,11 @@ public class TransferService extends Service {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
+            } finally {
+                Intent intent = new Intent(TransferService.BROADCAST_ACTION);
+                intent.putExtra("id", this.getId());
+                intent.putExtra("active", false);
+                sendBroadcast(intent);
             }
         }
     };
@@ -89,6 +108,13 @@ public class TransferService extends Service {
         public ReceiveThread(Socket s, File f) {
             client = s;
             file = f;
+
+            Intent intent = new Intent(TransferService.BROADCAST_ACTION);
+            intent.putExtra("id", this.getId());
+            intent.putExtra("message1", "Receiving file from " + client.getInetAddress().getHostAddress());
+            intent.putExtra("message2", file.getName());
+            intent.putExtra("active", true);
+            sendBroadcast(intent);
         }
 
         @Override
@@ -111,6 +137,11 @@ public class TransferService extends Service {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
+            } finally {
+                Intent intent = new Intent(TransferService.BROADCAST_ACTION);
+                intent.putExtra("id", this.getId());
+                intent.putExtra("active", false);
+                sendBroadcast(intent);
             }
         }
     };
@@ -192,6 +223,13 @@ public class TransferService extends Service {
                         } else if(cmds[0].equals("delete")) {
                             File file = new File(cmds[1]);
                             DeleteRecursive(file);
+                        } else if(cmds[0].equals("mkdir")) {
+                            File file = new File(cmds[1], cmds[2]);
+                            file.mkdir();
+                        } else if(cmds[0].equals("rename")) {
+                            File oldFile = new File(cmds[1]);
+                            File newFile = new File(oldFile.getParent(), cmds[2]);
+                            oldFile.renameTo(newFile);
                         } else if(cmds[0].equals("receive")) {
                             File file = new File(cmds[1]);
                             SendThread sendThread = new SendThread(client, file);

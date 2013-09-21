@@ -19,6 +19,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity {
 
@@ -26,7 +27,7 @@ public class MainActivity extends Activity {
 
     private TextView textOnOff, textIPAddress, textName, textTransfer;
     private Switch switchDiscovery;
-    private Button buttonName, buttonStop, buttonExit;
+    private Button buttonName, buttonExit;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,7 +41,6 @@ public class MainActivity extends Activity {
         textName = (TextView)findViewById(R.id.textName);
         textTransfer = (TextView)findViewById(R.id.textTransfer);
         buttonName = (Button)findViewById(R.id.buttonName);
-        buttonStop = (Button)findViewById(R.id.buttonStop);
         buttonExit = (Button)findViewById(R.id.buttonExit);
 
         final Boolean serviceRunning = getDiscoveryServiceRunning();
@@ -170,6 +170,13 @@ public class MainActivity extends Activity {
         return ipAddressString;
     }
 
+    ArrayList<MessageItem> msgs = new ArrayList<MessageItem>();
+
+    class MessageItem {
+        public long id;
+        public String message1, message2;
+    }
+
     BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -181,12 +188,30 @@ public class MainActivity extends Activity {
             } else if(action.equals(TransferService.BROADCAST_ACTION)) {
                 Bundle extra = intent.getExtras();
                 Boolean active = extra.getBoolean("active");
-                if(active) {
-                    String message1 = extra.getString("message1");
-                    String message2 = extra.getString("message2");
+                long id = extra.getLong("id");
 
-                    Spanned span = Html.fromHtml(message1 + "<br><b>File name:</b> " + message2);
-                    textTransfer.setText(span);
+                if(active) {
+                    MessageItem messageItem = new MessageItem();
+                    messageItem.id = id;
+                    messageItem.message1 =  extra.getString("message1");
+                    messageItem.message2 = extra.getString("message2");
+                    msgs.add(messageItem);
+                } else {
+                    for(int i=0;i<msgs.size();i++) {
+                        if(msgs.get(i).id == id) {
+                            msgs.remove(i);
+                            break;
+                        }
+                    }
+                }
+
+                if(msgs.size() > 0) {
+                    String msg = "";
+                    for(int i=0;i<msgs.size();i++) {
+                        msg += msgs.get(i).message1 + "<br><b>File name:</b> " + msgs.get(i).message2;
+                        if(i != msgs.size() - 1) msg += "<br><br>";
+                    }
+                    textTransfer.setText(Html.fromHtml(msg));
                 } else {
                     textTransfer.setText(getString(R.string.detail4));
                 }
