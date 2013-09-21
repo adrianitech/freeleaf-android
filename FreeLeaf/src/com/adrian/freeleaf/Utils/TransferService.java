@@ -31,8 +31,10 @@ public class TransferService extends Service {
         try {
             serverSocket = new ServerSocket(PORT);
             listenThread.start();
-            lock = ((WifiManager)getSystemService(Context.WIFI_SERVICE)).createWifiLock("transfer-wifi-lock");
-            lock.acquire();
+
+            WifiManager wm = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+            lock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL, "TransferWifiLock");
+            if(!lock.isHeld()) lock.acquire();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -47,7 +49,9 @@ public class TransferService extends Service {
         catch (IOException e) { e.printStackTrace(); }
         listenThread.interrupt();
 
-        if(lock != null) lock.release();
+        if(lock != null && lock.isHeld()) {
+            lock.release();
+        }
     }
 
     @Override
