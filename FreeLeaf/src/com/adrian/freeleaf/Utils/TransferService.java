@@ -4,9 +4,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Environment;
 import android.os.IBinder;
-import android.os.SystemClock;
-import android.text.format.Formatter;
-import android.util.Log;
 import org.apache.http.util.EncodingUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,7 +27,7 @@ public class TransferService extends Service {
         forceClose = false;
         try {
             serverSocket = new ServerSocket(PORT);
-            transferThread.start();
+            listenThread.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -43,7 +40,7 @@ public class TransferService extends Service {
         forceClose = true;
         try { serverSocket.close(); }
         catch (IOException e) { e.printStackTrace(); }
-        transferThread.interrupt();
+        listenThread.interrupt();
     }
 
     @Override
@@ -51,16 +48,81 @@ public class TransferService extends Service {
         return null;
     }
 
-    Thread transferThread = new Thread() {
+    private class SendThread extends Thread {
+        Socket client;
+        File file;
+
+        public SendThread(Socket s, File f) {
+            client = s;
+            file = f;
+        }
+
+        @Override
+        public void run() {
+            try {
+                OutputStream oStream = client.getOutputStream();
+                FileInputStream fis = new FileInputStream(file);
+
+                int bytesRead;
+                byte[] buffer = new byte[8192];
+
+                while((bytesRead = fis.read(buffer, 0, buffer.length)) > 0) {
+                    if(forceClose) break;
+                    oStream.write(buffer, 0, bytesRead);
+                }
+
+                oStream.flush();
+                oStream.close();
+                client.close();
+                fis.close();
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    };
+
+    private class ReceiveThread extends Thread {
+        Socket client;
+        File file;
+
+        public ReceiveThread(Socket s, File f) {
+            client = s;
+            file = f;
+        }
+
+        @Override
+        public void run() {
+            try {
+                InputStream iStream = client.getInputStream();
+                FileOutputStream fileStream = new FileOutputStream(file);
+
+                int bytesRead;
+                byte[] buffer = new byte[8192];
+
+                while((bytesRead = iStream.read(buffer, 0, buffer.length)) > 0) {
+                    if(forceClose) break;
+                    fileStream.write(buffer, 0, bytesRead);
+                }
+
+                fileStream.flush();
+                fileStream.close();
+                iStream.close();
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    };
+
+    Thread listenThread = new Thread() {
         @Override
         public void run() {
 
-            Integer nextIsFile = 0;
-            String name = null, path = null;
-            long size = 0;
-
-            byte[] buffer = new byte[8192];
             int bytesRead;
+            Boolean nextIsFile = false;
+            byte[] buffer = new byte[8192];
+            String name = null, path = null;
 
             while(!this.isInterrupted() && serverSocket != null && !serverSocket.isClosed()) {
                 if(forceClose) break;
@@ -73,46 +135,23 @@ public class TransferService extends Service {
                     client.setSendBufferSize(8192);
                     client.setReceiveBufferSize(8192);
 
-                    if(nextIsFile == 1 && size != 0) {
-                        nextIsFile = 0;
-
+                    if(nextIsFile) {
+                        nextIsFile = false;
                         File file = new File(path, name);
-                        FileOutputStream fileStream = new FileOutputStream(file);
-
-                        Intent intent = new Intent(BROADCAST_ACTION);
-                        intent.putExtra("active", true);
-                        intent.putExtra("message1", "Receiving file from " + client.getInetAddress().getHostAddress());
-                        intent.putExtra("message2", file.getName());
-                        sendBroadcast(intent);
-
-                        while((bytesRead = iStream.read(buffer, 0, buffer.length)) > 0) {
-                            if(forceClose) break;
-                            fileStream.write(buffer, 0, bytesRead);
-                        }
-
-                        fileStream.close();
-
-                        intent.putExtra("active", false);
-                        sendBroadcast(intent);
-
-                        name = null;
-                        path = null;
-                        size = 0;
-
+                        ReceiveThread receiveThread = new ReceiveThread(client, file);
+                        receiveThread.start();
+                        continue;
                     } else {
                         bytesRead = iStream.read(buffer, 0, buffer.length);
 
                         String cmd = EncodingUtils.getString(buffer, 0, bytesRead, "UTF-8");
                         String[] cmds = cmd.split(":");
-
                         if(cmds.length == 0) continue;
 
                         String response = "";
 
                         if(cmds[0].equals("root")) {
                             response = Environment.getExternalStorageDirectory().getAbsolutePath();
-                            oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
-                            oStream.close();
                         } else if(cmds[0].equals("up")) {
                             if(cmds[1].equals(
                                     Environment.getExternalStorageDirectory().getAbsolutePath())) {
@@ -121,8 +160,6 @@ public class TransferService extends Service {
                                 File file = new File(cmds[1]);
                                 response = file.getParent();
                             }
-                            oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
-                            oStream.close();
                         } else if(cmds[0].equals("list")) {
                             if(cmds.length >= 2) {
                                 File dir = new File(cmds[1]);
@@ -148,83 +185,23 @@ public class TransferService extends Service {
                                     response = jsonArray.toString();
                                 }
                             }
-                            oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
-                            oStream.close();
                         } else if(cmds[0].equals("send")) {
                             name = cmds[1];
                             path = cmds[2];
-                            size = Integer.parseInt(cmds[3]);
-
-                            nextIsFile = 1;
-                            oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
-                            oStream.close();
+                            nextIsFile = true;
                         } else if(cmds[0].equals("delete")) {
                             File file = new File(cmds[1]);
                             DeleteRecursive(file);
                         } else if(cmds[0].equals("receive")) {
-                            if(nextIsFile == 2) {
-                                nextIsFile = 0;
-
-                                File file = new File(path);
-                                FileInputStream fis = new FileInputStream(file);
-
-                                Intent intent = new Intent(BROADCAST_ACTION);
-                                intent.putExtra("active", true);
-                                intent.putExtra("message1", "Sending file to " + client.getInetAddress().getHostAddress());
-                                intent.putExtra("message2", file.getName());
-                                sendBroadcast(intent);
-
-                                while((bytesRead = fis.read(buffer, 0, buffer.length)) > 0) {
-                                    if(forceClose) break;
-                                    oStream.write(buffer, 0, bytesRead);
-                                }
-                                oStream.flush();
-
-                                intent.putExtra("active", false);
-                                sendBroadcast(intent);
-
-                                path = null;
-                                size = 0;
-
-                            } else {
-                                path = cmds[1];
-
-                                File file = new File(path);
-                                size = file.length();
-
-                                response = String.valueOf(size);
-                                nextIsFile = 2;
-                            }
-                        } else if(cmds[0].equals("stream")) {
-                            final String pp = cmds[1];
-                            final OutputStream os = oStream;
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    File file = new File(pp);
-                                    FileInputStream fis = null;
-                                    try {
-                                        fis = new FileInputStream(file);
-                                        int xxx = 0;
-                                        byte[] butter = new byte[1024];
-                                        while((xxx = fis.read(butter, 0, butter.length)) > 0) {
-                                            //if(forceClose) break;
-                                            os.write(butter, 0, xxx);
-                                        }
-                                    } catch (Exception e) {
-                                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                                    }
-
-                                }
-                            }).start();
+                            File file = new File(cmds[1]);
+                            SendThread sendThread = new SendThread(client, file);
+                            sendThread.start();
+                            continue;
                         }
 
-                        if(nextIsFile == 0) {
-                            //oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
-                        }
-                        //oStream.flush();
-
-                        //client.close();
+                        oStream.write(EncodingUtils.getBytes(response, "UTF-8"));
+                        oStream.flush();
+                        client.close();
                     }
 
                 } catch (IOException e) {
@@ -238,7 +215,6 @@ public class TransferService extends Service {
         if (fileOrDirectory.isDirectory())
             for (File child : fileOrDirectory.listFiles())
                 DeleteRecursive(child);
-
         fileOrDirectory.delete();
     }
 }
